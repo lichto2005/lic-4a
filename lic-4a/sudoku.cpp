@@ -199,15 +199,15 @@ void board::printConflicts()
 {
 	cout << "Row conflicts:\n";
 	for (int i = 1; i < boardSize + 1; i++)
-		cout << conflictsRows[i];
+		cout << i << ": " << conflictsRows[i];
 
 	cout << "Column conflicts:\n";
 	for (int i = 1; i < boardSize + 1; i++)
-		cout << conflictsCols[i];
+		cout << i << ": " << conflictsCols[i];
 
 	cout << "Square conflicts:\n";
 	for (int i = 1; i < boardSize + 1; i++)
-		cout << conflictsSq[i];
+		cout << i << ": " << conflictsSq[i];
 }
 
 bool board::checkConflicts(int i, int j, valueType val)
