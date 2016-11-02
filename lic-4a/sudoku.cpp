@@ -42,6 +42,7 @@ public:
 	void clearCell(int i, int j);
 	bool checkConflicts(int i, int j, valueType val);
 	bool isSolved();
+	void solve();
 private:
 
 	// The following matrices go from 1 to boardSize in each
@@ -229,6 +230,60 @@ bool board::isSolved()
 	return true;
 }
 
+void board::solve()
+{
+	// search for places that have only one option
+	//for (int i = 1; i < boardSize + 1; i++)
+	//{
+	//	for (int j = 1; j < boardSize + 1; j++)
+	//	{
+	//		int possible_nums = 0;
+	//		int possible_val;
+	//		for (int k = 1; k < boardSize + 1; k++)
+	//		{	
+	//			if (!checkConflicts(i, j, k))
+	//			{
+	//				possible_nums++;
+	//				possible_val = k;
+	//			}
+	//		}
+	//		if (possible_nums == 1)
+	//		{
+	//			setCell(i, j, possible_val);
+	//		}
+	//	}
+	//}
+	//print();
+	int i_set = 0, j_set = 0;
+	for (int i = 1; i < boardSize + 1; i++)
+	{
+		for (int j = 1; j < boardSize + 1; j++)
+		{
+			for (int k = 1; k < boardSize + 1; k++)
+			{
+				if (!checkConflicts(i, j, k) && isBlank(i, j))
+				{
+					i_set = i;
+					j_set = j;
+					setCell(i, j, k);
+					print();
+					printConflicts();
+					solve();
+				}
+			}
+		}
+	}
+	print();
+	printConflicts();
+	if (!isSolved())
+	{
+		clearCell(i_set, j_set);
+		solve();
+	}
+
+	printConflicts();
+}
+
 int main()
 {
 	ifstream fin;
@@ -253,6 +308,9 @@ int main()
 			b1.print();
 			b1.printConflicts();
 			cout << "Conflict if 1 added to 1,1: " << b1.checkConflicts(1, 1, 1) << endl;
+			b1.solve();
+			b1.print();
+			b1.printConflicts();
 			bool solved = b1.isSolved();
 			if (solved)
 				cout << "Solved!\n";
