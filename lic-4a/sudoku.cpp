@@ -31,6 +31,9 @@ class board
 	// Stores the entire Sudoku board
 {
 public:
+	//hold num recursive calls
+	int num_recursive_calls = 0;
+
 	board(int);
 	void clear();
 	void initialize(ifstream &fin);
@@ -42,9 +45,9 @@ public:
 	void clearCell(int i, int j);
 	bool checkConflicts(int i, int j, valueType val);
 	bool isSolved();
-	void solve();
+	void solve(int);
 private:
-
+	bool backtracing = false;
 	// The following matrices go from 1 to boardSize in each
 	// dimension.  I.e. they are each (boardSize+1) X (boardSize+1)
 	matrix<bool> conflictsRows;
@@ -102,7 +105,7 @@ void board::initialize(ifstream &fin)
 // Read a Sudoku board from the input file.
 {
 	char ch;
-
+	num_recursive_calls = 0;
 	clear();
 	for (int i = 1; i <= boardSize; i++)
 		for (int j = 1; j <= boardSize; j++)
@@ -230,58 +233,45 @@ bool board::isSolved()
 	return true;
 }
 
-void board::solve()
+void board::solve(int index)
 {
-	// search for places that have only one option
-	//for (int i = 1; i < boardSize + 1; i++)
-	//{
-	//	for (int j = 1; j < boardSize + 1; j++)
-	//	{
-	//		int possible_nums = 0;
-	//		int possible_val;
-	//		for (int k = 1; k < boardSize + 1; k++)
-	//		{	
-	//			if (!checkConflicts(i, j, k))
-	//			{
-	//				possible_nums++;
-	//				possible_val = k;
-	//			}
-	//		}
-	//		if (possible_nums == 1)
-	//		{
-	//			setCell(i, j, possible_val);
-	//		}
-	//	}
-	//}
-	//print();
-	int i_set = 0, j_set = 0;
-	for (int i = 1; i < boardSize + 1; i++)
+	//if index oob, return
+	if (index > boardSize * boardSize) return;
+	//else calculate i and j
+	int i = 1 + ((index - 1) / boardSize);
+	int j = 1 + ((index - 1) % boardSize);
+	// if cell is blank
+	if (isBlank(i, j))
 	{
-		for (int j = 1; j < boardSize + 1; j++)
+		backtracing = false;
+		//try to put a value in the cell
+		for (int val = 1; val < boardSize + 1; val++)
 		{
-			for (int k = 1; k < boardSize + 1; k++)
+			if (!checkConflicts(i, j, val))
 			{
-				if (!checkConflicts(i, j, k) && isBlank(i, j))
+				setCell(i, j, val);
+				//move to next cell
+				solve(index + 1);
+				if (!isSolved())
 				{
-					i_set = i;
-					j_set = j;
-					setCell(i, j, k);
-					print();
-					printConflicts();
-					solve();
+					if (!backtracing)
+					{
+						num_recursive_calls++;
+						backtracing = true;
+					}
+					// if call comes back and board not solved
+					// remove value and try another one
+					clearCell(i, j);
 				}
 			}
 		}
 	}
-	print();
-	printConflicts();
-	if (!isSolved())
+	// if cell is not blank (it started on the board)
+	else
 	{
-		clearCell(i_set, j_set);
-		solve();
+		// go to next element
+		solve(index + 1);
 	}
-
-	printConflicts();
 }
 
 int main()
@@ -289,7 +279,7 @@ int main()
 	ifstream fin;
 
 	// Read the sample grid from the file.
-	string fileName = "sudoku1.txt";
+	string fileName = "sudoku.txt";
 
 	fin.open(fileName.c_str());
 	if (!fin)
@@ -301,21 +291,26 @@ int main()
 	try
 	{
 		board b1(squareSize);
-
+		int total_rec = 0;
+		int total_solved = 0;
 		while (fin && fin.peek() != 'Z')
 		{
+			cout << "-------------------------------------------------\n";
 			b1.initialize(fin);
 			b1.print();
-			b1.printConflicts();
-			cout << "Conflict if 1 added to 1,1: " << b1.checkConflicts(1, 1, 1) << endl;
-			b1.solve();
-			b1.print();
-			b1.printConflicts();
+			b1.solve(1);
 			bool solved = b1.isSolved();
 			if (solved)
-				cout << "Solved!\n";
-			else cout << "Not solved.\n";
+			{
+				total_rec += b1.num_recursive_calls;
+				total_solved++;
+				b1.print();
+				cout << "Solved! Took at total of " << b1.num_recursive_calls << " recursive steps.\n";
+			}
+			else cout << "Error! Not solved.\n";
+			cout << "-------------------------------------------------\n";
 		}
+		cout << "Total solved: " << total_solved << endl << "Average number of recursions : " << total_rec / total_solved << endl;
 	}
 	catch (indexRangeError &ex)
 	{
